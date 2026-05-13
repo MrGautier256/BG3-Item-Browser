@@ -92,20 +92,6 @@
               </div>
             </div>
 
-            <!-- Effects -->
-            <DetailSection v-if="item.display_effects && item.display_effects.some(e => e.name)"
-              :title="t('item.effects')" icon-color="text-green-500 dark:text-green-400">
-              <div class="space-y-2">
-                <div v-for="(effect, i) in item.display_effects.filter(e => e.name)" :key="i"
-                  class="flex items-start gap-2 text-sm">
-                  <span class="text-green-500 mt-0.5">•</span>
-                  <span class="text-gray-700 dark:text-gray-300">
-                    {{ effect.name?.[locale] || effect.name?.en }}
-                  </span>
-                </div>
-              </div>
-            </DetailSection>
-
             <!-- Passives -->
             <DetailSection
               v-if="item.passives_full && item.passives_full.length > 0"
