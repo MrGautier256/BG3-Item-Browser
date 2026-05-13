@@ -54,16 +54,16 @@
         <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
           {{ t('filters.rarity') }}
         </label>
-        <select
-          :value="selectedRarity"
-          @change="$emit('update:selectedRarity', $event.target.value)"
-          class="w-full px-3 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-bg3-ink bg-gray-50 dark:bg-bg3-ink/30 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-bg3-gold/50 focus:border-bg3-gold outline-none transition-all appearance-none cursor-pointer"
-        >
-          <option value="">{{ t('filters.allRarities') }}</option>
-          <option v-for="r in availableRarities" :key="r" :value="r">
-            {{ t(`rarities.${r}`) }}
-          </option>
-        </select>
+        <div
+          class="space-y-1.5 max-h-48 overflow-y-auto rounded-xl border border-gray-200 dark:border-bg3-ink bg-gray-50 dark:bg-bg3-ink/30 p-2.5">
+          <label v-for="r in availableRarities" :key="r"
+            class="flex items-center gap-2.5 cursor-pointer px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-bg3-ink/50 transition-colors">
+            <input type="checkbox" :checked="selectedRarity.includes(r)" @change="toggleFilter('selectedRarity', r)"
+              class="w-4 h-4 rounded border-gray-300 dark:border-bg3-ink text-bg3-gold focus:ring-bg3-gold/50 bg-white dark:bg-bg3-ink cursor-pointer" />
+            <span class="text-sm text-gray-700 dark:text-gray-200">{{ t(`rarities.${r}`) }}</span>
+            <span class="ml-auto w-2.5 h-2.5 rounded-full" :style="{ backgroundColor: rarityDotColor(r) }"></span>
+          </label>
+        </div>
       </div>
 
       <!-- Category Filter -->
@@ -71,16 +71,15 @@
         <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
           {{ t('filters.category') }}
         </label>
-        <select
-          :value="selectedCategory"
-          @change="$emit('update:selectedCategory', $event.target.value)"
-          class="w-full px-3 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-bg3-ink bg-gray-50 dark:bg-bg3-ink/30 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-bg3-gold/50 focus:border-bg3-gold outline-none transition-all appearance-none cursor-pointer"
-        >
-          <option value="">{{ t('filters.allCategories') }}</option>
-          <option v-for="c in availableCategories" :key="c" :value="c">
-            {{ t(`categories.${c}`) }}
-          </option>
-        </select>
+        <div
+          class="space-y-1.5 max-h-48 overflow-y-auto rounded-xl border border-gray-200 dark:border-bg3-ink bg-gray-50 dark:bg-bg3-ink/30 p-2.5">
+          <label v-for="c in availableCategories" :key="c"
+            class="flex items-center gap-2.5 cursor-pointer px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-bg3-ink/50 transition-colors">
+            <input type="checkbox" :checked="selectedCategory.includes(c)" @change="toggleFilter('selectedCategory', c)"
+              class="w-4 h-4 rounded border-gray-300 dark:border-bg3-ink text-bg3-gold focus:ring-bg3-gold/50 bg-white dark:bg-bg3-ink cursor-pointer" />
+            <span class="text-sm text-gray-700 dark:text-gray-200">{{ t(`categories.${c}`) }}</span>
+          </label>
+        </div>
       </div>
 
       <!-- Sort -->
@@ -172,11 +171,11 @@ import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 
-defineProps({
+const props = defineProps({
   isOpen: { type: Boolean, default: false },
   searchQuery: { type: String, default: '' },
-  selectedRarity: { type: String, default: '' },
-  selectedCategory: { type: String, default: '' },
+  selectedRarity: { type: Array, default: () => [] },
+  selectedCategory: { type: Array, default: () => [] },
   showFavoritesOnly: { type: Boolean, default: false },
   showUniqueOnly: { type: Boolean, default: false },
   sortBy: { type: String, default: 'name' },
@@ -185,7 +184,7 @@ defineProps({
   availableCategories: { type: Array, default: () => [] },
 })
 
-defineEmits([
+const emit = defineEmits([
   'close',
   'update:searchQuery',
   'update:selectedRarity',
@@ -196,6 +195,30 @@ defineEmits([
   'update:sortOrder',
   'reset',
 ])
+
+const RARITY_DOT_COLORS = {
+  Common: '#9ca3af',
+  Uncommon: '#22c55e',
+  Rare: '#3b82f6',
+  VeryRare: '#a855f7',
+  Legendary: '#f59e0b',
+  Story: '#ec4899',
+}
+
+function rarityDotColor(r) {
+  return RARITY_DOT_COLORS[r] || '#9ca3af'
+}
+
+function toggleFilter(filterName, value) {
+  const current = [...props[filterName]]
+  const idx = current.indexOf(value)
+  if (idx >= 0) {
+    current.splice(idx, 1)
+  } else {
+    current.push(value)
+  }
+  emit(`update:${filterName}`, current)
+}
 </script>
 
 <style scoped>

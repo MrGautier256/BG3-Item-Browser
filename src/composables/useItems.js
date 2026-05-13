@@ -19,8 +19,8 @@ export function useItems() {
 
   // Filters (persisted)
   const searchQuery = useLocalStorage('bg3-search', '')
-  const selectedRarity = useLocalStorage('bg3-rarity', '')
-  const selectedCategory = useLocalStorage('bg3-category', '')
+  const selectedRarity = useLocalStorage('bg3-rarity', [])
+  const selectedCategory = useLocalStorage('bg3-category', [])
   const showFavoritesOnly = useLocalStorage('bg3-favonly', false)
   const showUniqueOnly = useLocalStorage('bg3-uniqueonly', false)
   const sortBy = useLocalStorage('bg3-sort', 'name')
@@ -101,13 +101,13 @@ export function useItems() {
     }
 
     // Rarity filter
-    if (selectedRarity.value) {
-      items = items.filter(item => item.rarity === selectedRarity.value)
+    if (selectedRarity.value.length > 0) {
+      items = items.filter(item => selectedRarity.value.includes(item.rarity))
     }
 
     // Category filter
-    if (selectedCategory.value) {
-      items = items.filter(item => item.category === selectedCategory.value)
+    if (selectedCategory.value.length > 0) {
+      items = items.filter(item => selectedCategory.value.includes(item.category))
     }
 
     // Favorites only
@@ -154,8 +154,8 @@ export function useItems() {
 
   function resetFilters() {
     searchQuery.value = ''
-    selectedRarity.value = ''
-    selectedCategory.value = ''
+    selectedRarity.value = []
+    selectedCategory.value = []
     showFavoritesOnly.value = false
     showUniqueOnly.value = false
     sortBy.value = 'name'
