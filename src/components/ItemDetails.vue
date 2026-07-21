@@ -58,39 +58,39 @@
             </div>
 
             <!-- Weapon Damage -->
-            <DetailSection v-if="item.weapon_damage && item.weapon_damage.length > 0" :title="t('item.weaponDamage')" icon="🗡️">
+            <DetailSection v-if="weaponDamageEntries.length > 0" :title="t('item.weaponDamage')" icon="🗡️">
               <div class="space-y-2">
-                <div v-for="(wd, i) in item.weapon_damage" :key="i" class="flex items-center gap-3 p-2 rounded-lg bg-red-50 dark:bg-red-900/20">
-                  <span class="font-mono font-bold text-red-700 dark:text-red-300">{{ wd.damage }}</span>
-                  <span class="badge bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">{{ translateDamageType(wd.damage_type) }}</span>
-                  <span v-if="wd.versatile" class="badge bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300">Versatile: {{ wd.versatile }}</span>
+                <div v-for="(wd, i) in weaponDamageEntries" :key="i" class="flex items-center gap-3 p-2 rounded-lg bg-red-50 dark:bg-red-900/20">
+                  <span class="font-mono font-bold text-red-700 dark:text-red-300">{{ wd.bonus ? '+' : '' }}{{ wd.dice }}</span>
+                  <span class="badge bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">{{ translateDamageType(wd.type) }}</span>
+                  <span v-if="wd.qualifier" class="text-xs text-gray-500 dark:text-gray-400">({{ wd.qualifier }})</span>
+                  <span v-if="wd.bonus" class="text-xs text-gray-500 dark:text-gray-400 italic">{{ locale === 'fr' ? "dégâts bonus propres à l'arme" : 'bonus weapon damage' }}</span>
                 </div>
               </div>
             </DetailSection>
 
             <!-- Effects -->
-            <DetailSection v-if="item.effects && item.effects.length > 0" :title="t('item.effects')" icon="✨">
+            <DetailSection v-if="visibleEffects.length > 0" :title="t('item.effects')" icon="✨">
               <div class="space-y-2">
-                <div v-for="(e, i) in item.effects" :key="i" class="p-2 rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20">
-                  <p class="text-sm font-medium text-amber-800 dark:text-amber-300">{{ e.label || e.raw }}</p>
-                  <p v-if="e.type" class="text-xs text-amber-600 dark:text-amber-400 mt-0.5">{{ e.type }}</p>
+                <div v-for="(e, i) in visibleEffects" :key="i" class="p-2 rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20">
+                  <p class="text-sm font-medium text-amber-800 dark:text-amber-300">{{ e }}</p>
                 </div>
               </div>
             </DetailSection>
 
             <!-- Passives -->
-            <DetailSection v-if="item.passives_full && item.passives_full.length > 0" :title="t('item.passives')" icon="🔮">
+            <DetailSection v-if="visiblePassives.length > 0" :title="t('item.passives')" icon="🔮">
               <div class="space-y-3">
-                <div v-for="(p, i) in item.passives_full" :key="i" class="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20">
+                <div v-for="(p, i) in visiblePassives" :key="i" class="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20">
                   <div class="flex items-center gap-2 mb-1">
                     <img v-if="p.icon" :src="`./icons/${p.icon}.png`" class="w-6 h-6 rounded" @error="(e) => e.target.style.display='none'" />
                     <h5 class="font-semibold text-sm text-blue-800 dark:text-blue-300">{{ getLocalizedName(p.name) }}</h5>
                   </div>
-                  <p class="text-sm text-blue-700 dark:text-blue-200 leading-relaxed">{{ getLocalizedDesc(p.description) }}</p>
-                  <p v-if="getLocalizedDesc(p.extra_description)" class="text-xs text-blue-600 dark:text-blue-300 mt-1 italic">{{ getLocalizedDesc(p.extra_description) }}</p>
-                  <!-- Boosts -->
-                  <div v-if="p.boosts && p.boosts.length > 0" class="mt-2">
-                    <p v-for="(b, bi) in p.boosts" :key="bi" class="text-xs font-mono text-blue-500 dark:text-blue-400 break-all">{{ b }}</p>
+                  <p class="text-sm text-blue-700 dark:text-blue-200 leading-relaxed">{{ resolveParams(getLocalizedDesc(p.description), p.description_params, weaponContext) }}</p>
+                  <p v-if="getLocalizedDesc(p.extra_description)" class="text-xs text-blue-600 dark:text-blue-300 mt-1 italic">{{ resolveParams(getLocalizedDesc(p.extra_description), p.extra_description_params, weaponContext) }}</p>
+                  <!-- Boosts traduits -->
+                  <div v-if="translatedBoosts(p.boosts).length > 0" class="mt-2 flex flex-wrap gap-1">
+                    <span v-for="(b, bi) in translatedBoosts(p.boosts)" :key="bi" class="badge bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">{{ b }}</span>
                   </div>
                 </div>
               </div>
@@ -103,30 +103,32 @@
                   <div class="flex items-center gap-2 mb-1">
                     <img v-if="s.icon" :src="`./icons/${s.icon}.png`" class="w-6 h-6 rounded" @error="(e) => e.target.style.display='none'" />
                     <h5 class="font-semibold text-sm text-purple-800 dark:text-purple-300">{{ getLocalizedName(s.name) }}</h5>
-                    <span v-if="s.level" class="badge bg-purple-200 dark:bg-purple-800 text-purple-700 dark:text-purple-200">Lvl {{ s.level }}</span>
-                    <span v-if="s.spell_school" class="badge bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300">{{ s.spell_school }}</span>
+                    <span v-if="s.level" class="badge bg-purple-200 dark:bg-purple-800 text-purple-700 dark:text-purple-200">Nv. {{ s.level }}</span>
+                    <span v-if="translateSpellSchool(s.spell_school)" class="badge bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300">{{ translateSpellSchool(s.spell_school) }}</span>
+                    <span v-if="s.cooldown" class="badge bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300">{{ translateCooldown(s.cooldown) }}</span>
                   </div>
-                  <p class="text-sm text-purple-700 dark:text-purple-200 leading-relaxed">{{ getLocalizedDesc(s.description) }}</p>
+                  <p class="text-sm text-purple-700 dark:text-purple-200 leading-relaxed">{{ resolveParams(getLocalizedDesc(s.description), s.description_params, weaponContext) }}</p>
+                  <p v-if="getLocalizedDesc(s.extra_description)" class="text-xs text-purple-600 dark:text-purple-300 mt-1 italic">{{ resolveParams(getLocalizedDesc(s.extra_description), s.extra_description_params, weaponContext) }}</p>
                   <!-- Damage from tooltip -->
                   <div v-if="s.tooltip?.damage_list?.length > 0" class="mt-2 flex flex-wrap gap-1">
                     <span v-for="(d, di) in s.tooltip.damage_list" :key="di" class="badge bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
-                      {{ formatDamage(d) }}
+                      {{ formatDamage(d, weaponContext) }}
                     </span>
                   </div>
                   <!-- Use costs -->
                   <div v-if="s.use_costs?.length > 0" class="mt-1">
-                    <span class="text-xs text-purple-500 dark:text-purple-400">{{ t('item.useCost') }}: {{ s.use_costs.join(', ') }}</span>
-                  </div>
-                  <!-- Spell flags -->
-                  <div v-if="s.spell_flags?.length > 0" class="mt-1 flex flex-wrap gap-1">
-                    <span v-for="(f, fi) in s.spell_flags.slice(0, 5)" :key="fi" class="text-[10px] px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300">{{ f }}</span>
+                    <span class="text-xs text-purple-500 dark:text-purple-400">{{ t('item.useCost') }}: {{ s.use_costs.map(translateUseCost).join(', ') }}</span>
                   </div>
                   <!-- Container spells -->
-                  <div v-if="s.container_spells?.length > 0" class="mt-2 pl-3 border-l-2 border-purple-200 dark:border-purple-700 space-y-1">
+                  <div v-if="s.container_spells?.length > 0" class="mt-2 pl-3 border-l-2 border-purple-200 dark:border-purple-700 space-y-2">
                     <p class="text-xs font-semibold text-purple-600 dark:text-purple-400">{{ t('item.containerSpells') }}:</p>
                     <div v-for="(cs, ci) in s.container_spells" :key="ci" class="text-xs text-purple-600 dark:text-purple-300">
                       <span class="font-medium">{{ getLocalizedName(cs.name) }}</span>
-                      <span v-if="getLocalizedDesc(cs.description)" class="block mt-0.5 text-purple-500 dark:text-purple-400">{{ getLocalizedDesc(cs.description) }}</span>
+                      <span v-if="getLocalizedDesc(cs.description)" class="block mt-0.5 text-purple-500 dark:text-purple-400">{{ resolveParams(getLocalizedDesc(cs.description), cs.description_params, weaponContext) }}</span>
+                      <div v-if="cs.tooltip?.damage_list?.length > 0" class="mt-1 flex flex-wrap gap-1">
+                        <span v-for="(d, di) in cs.tooltip.damage_list" :key="di" class="badge bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">{{ formatDamage(d, weaponContext) }}</span>
+                      </div>
+                      <span v-if="cs.use_costs?.length > 0" class="block mt-0.5 text-purple-400 dark:text-purple-500">{{ t('item.useCost') }}: {{ cs.use_costs.map(translateUseCost).join(', ') }}</span>
                     </div>
                   </div>
                 </div>
@@ -134,13 +136,13 @@
             </DetailSection>
 
             <!-- Status on equip -->
-            <DetailSection v-if="item.status_full && item.status_full.length > 0" :title="t('item.statuses')" icon="🔄">
+            <DetailSection v-if="visibleStatuses.length > 0" :title="t('item.statuses')" icon="🔄">
               <div class="space-y-3">
-                <div v-for="(s, i) in item.status_full" :key="i" class="p-3 rounded-lg bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/20">
+                <div v-for="(s, i) in visibleStatuses" :key="i" class="p-3 rounded-lg bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/20">
                   <h5 class="font-semibold text-sm text-green-800 dark:text-green-300">{{ getLocalizedName(s.name) }}</h5>
-                  <p v-if="getLocalizedDesc(s.description)" class="text-sm text-green-700 dark:text-green-200 mt-1">{{ getLocalizedDesc(s.description) }}</p>
-                  <div v-if="s.boosts?.length > 0" class="mt-1">
-                    <p v-for="(b, bi) in s.boosts" :key="bi" class="text-xs font-mono text-green-500 dark:text-green-400 break-all">{{ b }}</p>
+                  <p v-if="getLocalizedDesc(s.description)" class="text-sm text-green-700 dark:text-green-200 mt-1">{{ resolveParams(getLocalizedDesc(s.description), s.description_params, weaponContext) }}</p>
+                  <div v-if="translatedBoosts(s.boosts).length > 0" class="mt-2 flex flex-wrap gap-1">
+                    <span v-for="(b, bi) in translatedBoosts(s.boosts)" :key="bi" class="badge bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">{{ b }}</span>
                   </div>
                 </div>
               </div>
@@ -151,7 +153,10 @@
               <div class="space-y-3">
                 <div v-for="(int_, i) in item.interrupts_full" :key="i" class="p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/20">
                   <h5 class="font-semibold text-sm text-yellow-800 dark:text-yellow-300">{{ getLocalizedName(int_.name) }}</h5>
-                  <p v-if="getLocalizedDesc(int_.description)" class="text-sm text-yellow-700 dark:text-yellow-200 mt-1">{{ getLocalizedDesc(int_.description) }}</p>
+                  <p v-if="getLocalizedDesc(int_.description)" class="text-sm text-yellow-700 dark:text-yellow-200 mt-1">{{ resolveParams(getLocalizedDesc(int_.description), int_.description_params, weaponContext) }}</p>
+                  <div v-if="translatedBoosts(int_.boosts).length > 0" class="mt-2 flex flex-wrap gap-1">
+                    <span v-for="(b, bi) in translatedBoosts(int_.boosts)" :key="bi" class="badge bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300">{{ b }}</span>
+                  </div>
                 </div>
               </div>
             </DetailSection>
@@ -186,7 +191,13 @@ import DetailSection from './DetailSection.vue'
 import StatBox from './StatBox.vue'
 
 const { t, locale } = useI18n()
-const { cleanText, translateProficiency, translateDamageType, translateSlot, getLocalizedName, getLocalizedDesc, formatDamage, getRarityStyle } = useHelpers()
+const {
+  cleanText, translateProficiency, translateDamageType, translateSlot,
+  translateSpellSchool, translateCooldown, translateUseCost,
+  getLocalizedName, getLocalizedDesc, formatDamage, resolveParams,
+  translateBoostLine, isHiddenBoost, formatEffect, isHiddenStatus, isHiddenPassive,
+  getRarityStyle, getWeaponDamageEntries, getWeaponContext,
+} = useHelpers()
 
 const props = defineProps({
   item: Object,
@@ -198,6 +209,30 @@ defineEmits(['close', 'toggle-favorite', 'toggle-compare'])
 
 const iconError = ref(false)
 const showRawStats = ref(false)
+
+const weaponContext = computed(() => getWeaponContext(props.item))
+const weaponDamageEntries = computed(() => getWeaponDamageEntries(props.item))
+
+const visibleEffects = computed(() => {
+  return (props.item?.effects || [])
+    .map(e => formatEffect(e))
+    .filter(Boolean)
+})
+
+const visibleStatuses = computed(() => {
+  return (props.item?.status_full || []).filter(s => !isHiddenStatus(s))
+})
+
+const visiblePassives = computed(() => {
+  return (props.item?.passives_full || []).filter(p => !isHiddenPassive(p))
+})
+
+function translatedBoosts(boosts) {
+  return (boosts || [])
+    .filter(b => !isHiddenBoost(b))
+    .map(b => translateBoostLine(b, weaponContext.value))
+    .filter(Boolean)
+}
 
 const name = computed(() => props.item?.translations?.[locale.value]?.name || props.item?.translations?.en?.name || props.item?.title || props.item?.id || '')
 const description = computed(() => props.item?.translations?.[locale.value]?.description || props.item?.translations?.en?.description || props.item?.description || '')

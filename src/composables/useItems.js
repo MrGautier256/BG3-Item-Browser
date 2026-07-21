@@ -105,21 +105,13 @@ export function useItems() {
     return item.raw_stats?.Slot || null
   }
 
-  // Extract damage types from weapon_damage and effects
+  // Extract damage types from the weapon's own damage entries (source_type === 'weapon')
   function getItemDamageTypes(item) {
     const types = new Set()
     if (item.weapon_damage) {
-      item.weapon_damage.forEach(wd => {
-        if (wd.damage_type) types.add(wd.damage_type)
-      })
-    }
-    if (item.effects) {
-      item.effects.forEach(e => {
-        if (e.raw) {
-          const m = e.raw.match(/(?:DealDamage|WeaponDamage)\([^,]+,\s*(\w+)/i)
-          if (m) types.add(m[1])
-        }
-      })
+      item.weapon_damage
+        .filter(wd => wd.source_type === 'weapon')
+        .forEach(wd => { if (wd.type) types.add(wd.type) })
     }
     return Array.from(types)
   }

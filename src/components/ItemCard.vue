@@ -58,10 +58,10 @@
       </div>
 
       <!-- Weapon damage -->
-      <div v-if="item.weapon_damage && item.weapon_damage.length > 0" class="mt-2 flex flex-wrap gap-1">
-        <span v-for="(wd, i) in item.weapon_damage" :key="i"
+      <div v-if="weaponDamageEntries.length > 0" class="mt-2 flex flex-wrap gap-1">
+        <span v-for="(wd, i) in weaponDamageEntries" :key="i"
           class="badge bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
-          🗡️ {{ wd.damage }} {{ translateDamageType(wd.damage_type) }}
+          🗡️ {{ wd.bonus ? '+' : '' }}{{ wd.dice }} {{ translateDamageType(wd.type) }}<template v-if="wd.qualifier"> ({{ wd.qualifier }})</template>
         </span>
       </div>
 
@@ -101,7 +101,7 @@ import { useI18n } from 'vue-i18n'
 import { useHelpers } from '../composables/useHelpers'
 
 const { t, locale } = useI18n()
-const { cleanText, translateProficiency, translateDamageType, translateSlot, getLocalizedName, getRarityStyle } = useHelpers()
+const { cleanText, translateProficiency, translateDamageType, translateSlot, getRarityStyle, getWeaponDamageEntries, formatEffect, isHiddenPassive } = useHelpers()
 
 const props = defineProps({
   item: { type: Object, required: true },
@@ -117,6 +117,7 @@ const name = computed(() => props.item.translations?.[locale.value]?.name || pro
 const description = computed(() => props.item.translations?.[locale.value]?.description || props.item.translations?.en?.description || props.item.description || '')
 const iconSrc = computed(() => props.item.icon_path || `./icons/${props.item.icon}.png`)
 const slot = computed(() => props.item.raw_stats?.Slot || null)
+const weaponDamageEntries = computed(() => getWeaponDamageEntries(props.item))
 
 const proficiencyLabel = computed(() => {
   if (!props.item.proficiency_group) return ''
@@ -133,6 +134,7 @@ const previewTags = computed(() => {
   const lang = locale.value
   if (props.item.passives_full) {
     props.item.passives_full.forEach(p => {
+      if (isHiddenPassive(p)) return
       const n = p.name?.[lang] || p.name?.en || p.id
       if (n) tags.push(n)
     })
@@ -145,7 +147,8 @@ const previewTags = computed(() => {
   }
   if (props.item.effects) {
     props.item.effects.forEach(e => {
-      if (e.label) tags.push(e.label)
+      const label = formatEffect(e)
+      if (label) tags.push(label)
     })
   }
   return tags

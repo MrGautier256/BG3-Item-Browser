@@ -50,18 +50,19 @@
                 <CompareRow v-if="item.proficiency_group" :label="t('item.proficiency')" :value="translateProficiency(item.proficiency_group)" />
 
                 <!-- Weapon Damage -->
-                <div v-if="item.weapon_damage?.length > 0">
+                <div v-if="getWeaponDamageEntries(item).length > 0">
                   <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">{{ t('item.weaponDamage') }}</p>
-                  <div v-for="(wd, i) in item.weapon_damage" :key="i" class="flex items-center gap-1">
-                    <span class="font-mono text-xs font-bold text-red-600 dark:text-red-400">{{ wd.damage }}</span>
-                    <span class="text-xs text-gray-500">{{ translateDamageType(wd.damage_type) }}</span>
+                  <div v-for="(wd, i) in getWeaponDamageEntries(item)" :key="i" class="flex items-center gap-1">
+                    <span class="font-mono text-xs font-bold text-red-600 dark:text-red-400">{{ wd.bonus ? '+' : '' }}{{ wd.dice }}</span>
+                    <span class="text-xs text-gray-500">{{ translateDamageType(wd.type) }}</span>
+                    <span v-if="wd.qualifier" class="text-[10px] text-gray-400">({{ wd.qualifier }})</span>
                   </div>
                 </div>
 
                 <!-- Passives -->
-                <div v-if="item.passives_full?.length > 0">
+                <div v-if="visiblePassives(item).length > 0">
                   <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">{{ t('item.passives') }}</p>
-                  <p v-for="(p, i) in item.passives_full" :key="i" class="text-xs text-blue-600 dark:text-blue-400">
+                  <p v-for="(p, i) in visiblePassives(item)" :key="i" class="text-xs text-blue-600 dark:text-blue-400">
                     • {{ getLocalizedName(p.name) }}
                   </p>
                 </div>
@@ -75,10 +76,10 @@
                 </div>
 
                 <!-- Effects -->
-                <div v-if="item.effects?.length > 0">
+                <div v-if="visibleEffects(item).length > 0">
                   <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">{{ t('item.effects') }}</p>
-                  <p v-for="(e, i) in item.effects" :key="i" class="text-xs text-amber-600 dark:text-amber-400">
-                    {{ e.label || e.raw }}
+                  <p v-for="(e, i) in visibleEffects(item)" :key="i" class="text-xs text-amber-600 dark:text-amber-400">
+                    {{ e }}
                   </p>
                 </div>
 
@@ -100,7 +101,10 @@ import { useHelpers } from '../composables/useHelpers'
 import CompareRow from './CompareRow.vue'
 
 const { t, locale } = useI18n()
-const { translateProficiency, translateDamageType, translateSlot, getLocalizedName, getRarityStyle } = useHelpers()
+const {
+  translateProficiency, translateDamageType, translateSlot, getLocalizedName, getRarityStyle,
+  getWeaponDamageEntries, formatEffect, isHiddenPassive,
+} = useHelpers()
 
 defineProps({
   items: { type: Array, default: () => [] },
@@ -110,6 +114,14 @@ defineEmits(['remove', 'clear', 'select'])
 
 function getName(item) {
   return item.translations?.[locale.value]?.name || item.translations?.en?.name || item.title || item.id
+}
+
+function visibleEffects(item) {
+  return (item.effects || []).map(e => formatEffect(e)).filter(Boolean)
+}
+
+function visiblePassives(item) {
+  return (item.passives_full || []).filter(p => !isHiddenPassive(p))
 }
 
 function getRarityGradient(rarity) { return getRarityStyle(rarity).gradient }
