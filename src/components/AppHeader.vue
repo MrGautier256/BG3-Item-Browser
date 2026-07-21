@@ -3,11 +3,9 @@
     <div class="max-w-screen-2xl mx-auto px-4 py-3">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <!-- Logo & Title -->
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 cursor-pointer" @click="$emit('set-view', 'browse')">
           <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-bg3-gold to-bg3-gold-dark flex items-center justify-center shadow-lg">
-            <svg class="w-6 h-6 text-bg3-dark" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-            </svg>
+            <span class="text-xl">⚔️</span>
           </div>
           <div>
             <h1 class="font-display text-lg md:text-xl font-bold text-bg3-dark dark:text-bg3-gold leading-tight">
@@ -18,12 +16,9 @@
         </div>
 
         <!-- Stats & Controls -->
-        <div class="flex items-center gap-2 md:gap-4 flex-wrap">
+        <div class="flex items-center gap-2 md:gap-3 flex-wrap">
           <!-- Item counter -->
           <div class="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-bg3-ink/50 px-3 py-1.5 rounded-full">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-            </svg>
             <span class="font-semibold">{{ filteredCount }}</span>
             <span class="text-gray-400">/</span>
             <span>{{ totalCount }}</span>
@@ -31,12 +26,49 @@
           </div>
 
           <!-- Favorites counter -->
-          <div class="flex items-center gap-1.5 text-sm bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-3 py-1.5 rounded-full">
-            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-            </svg>
+          <button
+            @click="$emit('set-view', 'browse')"
+            class="flex items-center gap-1.5 text-sm bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-3 py-1.5 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+          >
+            <span>❤️</span>
             <span class="font-semibold">{{ favoritesCount }}</span>
-            <span class="hidden sm:inline">{{ t('header.favorites') }}</span>
+          </button>
+
+          <!-- Compare button -->
+          <button
+            @click="$emit('set-view', 'compare')"
+            class="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full transition-colors"
+            :class="activeView === 'compare'
+              ? 'bg-bg3-gold text-white'
+              : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30'"
+          >
+            <span>⚖️</span>
+            <span class="font-semibold">{{ compareCount }}</span>
+            <span class="hidden sm:inline">{{ t('header.compare') }}</span>
+          </button>
+
+          <!-- Export dropdown -->
+          <div class="relative" ref="exportDropdown">
+            <button
+              @click="showExport = !showExport"
+              class="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+            >
+              <span>📤</span>
+              <span class="hidden sm:inline">{{ t('header.export') }}</span>
+            </button>
+            <Transition name="fade">
+              <div v-if="showExport" class="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-bg3-dark-mid rounded-xl border border-gray-200 dark:border-bg3-ink shadow-xl z-50 py-1">
+                <button @click="$emit('export-json'); showExport = false" class="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-bg3-ink/50 transition-colors">
+                  📄 {{ t('header.exportJSON') }}
+                </button>
+                <button @click="$emit('export-favorites'); showExport = false" class="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-bg3-ink/50 transition-colors">
+                  ❤️ {{ t('export.favoritesOnly') }}
+                </button>
+                <button @click="$emit('copy-link'); showExport = false" class="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-bg3-ink/50 transition-colors">
+                  🔗 {{ t('header.exportLink') }}
+                </button>
+              </div>
+            </Transition>
           </div>
 
           <!-- Language Switch -->
@@ -45,26 +77,16 @@
             class="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full bg-bg3-gold/10 hover:bg-bg3-gold/20 dark:bg-bg3-gold/20 dark:hover:bg-bg3-gold/30 text-bg3-gold-dark dark:text-bg3-gold transition-colors font-medium"
             :title="t('header.language')"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
-            </svg>
-            <span>{{ locale === 'fr' ? 'FR' : 'EN' }}</span>
+            🌐 {{ locale === 'fr' ? 'FR' : 'EN' }}
           </button>
 
           <!-- Theme Toggle -->
           <button
-            @click="toggleTheme"
+            @click="$emit('toggle-theme')"
             class="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-bg3-ink/50 dark:hover:bg-bg3-ink transition-colors"
             :title="t('header.theme')"
           >
-            <!-- Sun (shown in dark mode) -->
-            <svg v-if="isDark" class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 7a5 5 0 100 10 5 5 0 000-10zM2 13h2a1 1 0 100-2H2a1 1 0 100 2zm18 0h2a1 1 0 100-2h-2a1 1 0 100 2zM11 2v2a1 1 0 102 0V2a1 1 0 10-2 0zm0 18v2a1 1 0 102 0v-2a1 1 0 10-2 0zM5.99 4.58a1 1 0 10-1.41 1.41l1.06 1.06a1 1 0 001.41-1.41L5.99 4.58zm12.37 12.37a1 1 0 10-1.41 1.41l1.06 1.06a1 1 0 001.41-1.41l-1.06-1.06zm1.06-10.96a1 1 0 10-1.41-1.41l-1.06 1.06a1 1 0 001.41 1.41l1.06-1.06zM7.05 18.36a1 1 0 10-1.41-1.41l-1.06 1.06a1 1 0 001.41 1.41l1.06-1.06z"/>
-            </svg>
-            <!-- Moon (shown in light mode) -->
-            <svg v-else class="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M21.64 13a1 1 0 00-1.05-.14 8.05 8.05 0 01-3.37.73A8.15 8.15 0 019.08 5.49a8.59 8.59 0 01.25-2 1 1 0 00-1.28-1.21A10 10 0 1021.64 13z"/>
-            </svg>
+            {{ isDark ? '☀️' : '🌙' }}
             <span class="hidden sm:inline text-gray-600 dark:text-gray-300">
               {{ isDark ? t('header.light') : t('header.dark') }}
             </span>
@@ -75,10 +97,7 @@
             @click="$emit('toggle-filters')"
             class="md:hidden flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full bg-bg3-gold/10 hover:bg-bg3-gold/20 text-bg3-gold-dark dark:text-bg3-gold transition-colors"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-            </svg>
-            <span>{{ t('filters.title') }}</span>
+            🔍 {{ t('filters.title') }}
           </button>
         </div>
       </div>
@@ -87,6 +106,7 @@
 </template>
 
 <script setup>
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t, locale } = useI18n()
@@ -95,17 +115,27 @@ const props = defineProps({
   filteredCount: { type: Number, default: 0 },
   totalCount: { type: Number, default: 0 },
   favoritesCount: { type: Number, default: 0 },
+  compareCount: { type: Number, default: 0 },
   isDark: { type: Boolean, default: false },
+  activeView: { type: String, default: 'browse' },
 })
 
-const emit = defineEmits(['toggle-theme', 'toggle-filters'])
+const emit = defineEmits(['toggle-theme', 'toggle-filters', 'set-view', 'export-json', 'export-favorites', 'copy-link'])
+
+const showExport = ref(false)
+const exportDropdown = ref(null)
 
 function toggleLocale() {
   locale.value = locale.value === 'fr' ? 'en' : 'fr'
   localStorage.setItem('bg3-locale', locale.value)
 }
 
-function toggleTheme() {
-  emit('toggle-theme')
+function handleClickOutside(e) {
+  if (exportDropdown.value && !exportDropdown.value.contains(e.target)) {
+    showExport.value = false
+  }
 }
+
+onMounted(() => document.addEventListener('click', handleClickOutside))
+onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 </script>

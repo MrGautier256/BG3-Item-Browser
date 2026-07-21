@@ -1,25 +1,20 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{vue,js,ts,jsx,tsx}",
-  ],
+  content: ['./index.html', './src/**/*.{vue,js,ts}'],
   darkMode: 'class',
   theme: {
     extend: {
       colors: {
         bg3: {
-          gold: '#c8a84e',
-          'gold-light': '#e4cc7a',
-          'gold-dark': '#9a7a2e',
-          crimson: '#8b1a1a',
-          'crimson-light': '#b22222',
-          parchment: '#f5e6c8',
-          'parchment-dark': '#e8d5a8',
-          dark: '#1a1a2e',
-          'dark-mid': '#16213e',
-          'dark-light': '#0f3460',
-          ink: '#2c2c3a',
+          gold: '#D4A44C',
+          'gold-dark': '#A67C2E',
+          'gold-light': '#F0D78C',
+          crimson: '#8B1A1A',
+          dark: '#1A1A2E',
+          'dark-mid': '#16213E',
+          ink: '#0F3460',
+          parchment: '#F5F0E1',
+          'parchment-dark': '#E8DCC8',
         },
         rarity: {
           common: '#9ca3af',
@@ -28,31 +23,25 @@ export default {
           veryrare: '#a855f7',
           legendary: '#f59e0b',
           story: '#ec4899',
-        }
+        },
       },
       fontFamily: {
-        display: ['"Cinzel"', 'serif'],
-        body: ['"Inter"', 'sans-serif'],
+        display: ['Georgia', 'Cambria', 'serif'],
+        body: ['Inter', 'system-ui', 'sans-serif'],
+      },
+      screens: {
+        '2xl': '1536px',
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-out',
+        'scale-in': 'scaleIn 0.25s ease-out',
         'slide-up': 'slideUp 0.3s ease-out',
-        'scale-in': 'scaleIn 0.2s ease-out',
       },
       keyframes: {
-        fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
-        },
-        slideUp: {
-          '0%': { opacity: '0', transform: 'translateY(10px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-        scaleIn: {
-          '0%': { opacity: '0', transform: 'scale(0.95)' },
-          '100%': { opacity: '1', transform: 'scale(1)' },
-        },
-      }
+        fadeIn: { from: { opacity: '0', transform: 'translateY(8px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
+        scaleIn: { from: { opacity: '0', transform: 'scale(0.95)' }, to: { opacity: '1', transform: 'scale(1)' } },
+        slideUp: { from: { opacity: '0', transform: 'translateY(16px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
+      },
     },
   },
   plugins: [],
